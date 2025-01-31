@@ -1,0 +1,156 @@
+<!-- Add this where you want the new additions section to appear -->
+<div class="main container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="new-additions">
+                <h2>New Additions</h2>
+                <div class="resources-grid"></div>
+            </div>
+
+            <style>
+                .new-additions {
+                    padding: 20px;
+                    background: #f5f5f5;
+                    border-radius: 5px;
+                    margin: 20px 0;
+                }
+
+                .resources-grid {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 20px;
+                }
+
+                .resource-item {
+                    background: white;
+                    padding: 15px;
+                    border-radius: 4px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+
+                .book-container {
+                    display: flex;
+                    gap: 15px;
+                }
+
+                .book-image img {
+                    width: 100px;
+                    height: 150px;
+                    object-fit: cover;
+                    border: 1px solid #ddd;
+                    box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+                }
+
+                .book-details {
+                    flex: 1;
+                }
+
+                .book-details a {
+                    color: #2962ff;
+                    text-decoration: none;
+                    font-size: 1.1em;
+                }
+
+                .author {
+                    color: #666;
+                    font-style: italic;
+                    margin: 5px 0;
+                }
+
+                .details {
+                    color: #555;
+                    font-size: 0.9em;
+                }
+
+                .isbn, .pages, .edition {
+                    color: #666;
+                    font-size: 0.85em;
+                    margin-top: 3px;
+                }
+
+                .added-date {
+                    color: #888;
+                    font-size: 0.8em;
+                    margin-top: 5px;
+                }
+
+                @media (max-width: 768px) {
+                    .resources-grid {
+                        grid-template-columns: 1fr;
+                    }
+                }
+            </style>
+
+            <script>
+                function loadImageWithTimeout(imgElement, imageUrl, fallbackUrl, timeout = 1000) {
+                    const timer = setTimeout(() => {
+                        imgElement.src = fallbackUrl;
+                    }, timeout);
+
+                    imgElement.onload = () => clearTimeout(timer);
+                    imgElement.src = imageUrl;
+                }
+
+                function updateResourcesDisplay(resources) {
+                    const container = document.querySelector('.resources-grid');
+                    if (!container) return;
+                    
+                    container.innerHTML = resources.map(book => `
+                        <div class="resource-item">
+                            <div class="book-container">
+                                <div class="book-image">
+                                    <a href="/cgi-bin/koha/opac-detail.pl?biblionumber=${book.biblio_id}">
+                                        <img 
+                                            data-isbn="${book.isbn || ''}"
+                                            alt="${book.title} cover"
+                                            src="/opac-tmpl/bootstrap/images/no-image.png">
+                                    </a>
+                                </div>
+                                <div class="book-details">
+                                        <a href="/cgi-bin/koha/opac-detail.pl?biblionumber=${book.biblio_id}">
+                                            <strong>${book.title}</strong>
+                                        </a>
+                                        <div class="author">by ${book.author || 'Unknown'}</div>
+                                        <div class="details">${book.publisher}${book.publication_place ? `, ${book.publication_place}` : ''}${book.copyright_date ? `, ${book.copyright_date}` : ''}</div>
+                                        ${book.isbn ? `<div class="isbn">ISBN: ${book.isbn}</div>` : ''}
+                                        ${book.pages ? `<div class="pages">Pages: ${book.pages}</div>` : ''}
+                                        ${book.edition_statement ? `<div class="edition">${book.edition_statement}</div>` : ''}
+                                        <div class="added-date">Added: ${new Date(book.creation_date).toLocaleDateString()}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+
+                    // Handle image loading after DOM is updated
+                    container.querySelectorAll('img[data-isbn]').forEach(img => {
+                        const isbn = img.dataset.isbn;
+                        if (isbn) {
+                            loadImageWithTimeout(
+                                img,
+                                `https://images-na.ssl-images-amazon.com/images/P/${isbn}.01.LZZZZZZZ.jpg`,
+                                '/opac-tmpl/bootstrap/images/no-image.png'
+                            );
+                        }
+                    });
+                }
+
+                const apiUrl = 'https://samikshani.socialwell.in/api/v1/biblios?_order_by=-creation_date&_per_page=10';
+                const credentials = btoa('$USERNAME:#PASSWORD');
+
+                fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Basic ${credentials}`,
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => updateResourcesDisplay(data))
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.querySelector('.new-additions').innerHTML = '<p>Unable to load resources at this time.</p>';
+                });
+            </script>
+        </div>
+    </div>
+</div>
