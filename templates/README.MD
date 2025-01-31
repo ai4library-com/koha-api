@@ -45,6 +45,3 @@ Visit our demo site to see it in action:
 
 **A4Library (AI4Library.com)**  
 Email: hi@ai4library.com
-
----
-© 2024 AI4Library.com - Making library automation smarter
